@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  nginx:
+    container_name: "nginx"
+    build: ./nginx
+    restart: on-failure
+    depends_on:
+      - api
+    ports:
+      - 80:80
+
+  api:
+    container_name: "api"
+    build: .
+    command: sh -c "uvicorn api.app:app --reload --port=8000 --host=0.0.0.0"
+    ports:
+      - 8000:8000
+    depends_on:
+      - mongodb
+      - redis
+
+  mongodb:
+    image: mongo
+    container_name: "mongodb"
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodbdata:/data/db
+
+  tg_bot:
+    container_name: "tg_bot"
+    build: ./tg_bot
+    command: sh -c "python main.py"
+    env_file:
+      - tg_bot/.env.tgbot
+    depends_on:
+      - api
+
+volumes:
+  mongodbdata:
